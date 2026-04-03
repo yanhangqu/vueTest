@@ -1,5 +1,8 @@
 import axios from "axios";
 
+// 引入 store
+import { useUserStore } from '../store/user';
+
 // 1.创建axios实例（RestTemplate Bean）
 const request = axios.create({
   baseURL: "https://jsonplaceholder.typicode.com",
@@ -11,12 +14,14 @@ request.interceptors.request.use(
   (config) => {
     console.log(`【请求拦截】发起请求：${config.url}`);
 
-    // 从浏览器本地缓存中获取token
+    // 实例化 Store
+    const userStore = useUserStore;
 
-    // const token = localStorage.getItem('token');
-    // if(token){
-    //     config.headers['Authorization'] =  `Bearer ${token}`;
-    // }
+    // 如果仓库右 Token ,就塞进请求头 Authorization 中
+    if(userStore.token){
+      // 这里的 'Bearer ' 后面带个空格，是国际标准的 JWT Token 格式
+      config.headers['Authorization'] = `Bearer ${userStore.token}`;
+    }
 
     return config;
   },
