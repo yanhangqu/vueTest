@@ -15,12 +15,16 @@ request.interceptors.request.use(
     console.log(`【请求拦截】发起请求：${config.url}`);
 
     // 实例化 Store
-    const userStore = useUserStore;
+    const userStore = useUserStore();
+    
+    console.log("【l拦截器触发】当前的token是：",userStore.token);
 
     // 如果仓库右 Token ,就塞进请求头 Authorization 中
     if(userStore.token){
       // 这里的 'Bearer ' 后面带个空格，是国际标准的 JWT Token 格式
-      config.headers['Authorization'] = `Bearer ${userStore.token}`;
+      // config.headers['Authorization'] = `Bearer ${userStore.token}`;
+      // 建议改成这种写法，兼容性更好
+      config.headers.Authorization = `Bearer ${userStore.token}`;
     }
 
     return config;

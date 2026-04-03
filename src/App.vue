@@ -278,7 +278,7 @@ h2 {
 </style> -->
 
 <!-- ==============增加路由router=================== -->
-<template>
+<!-- <template>
   <el-container class="layout-container">
     <el-aside width="200px" class="aside">
       <h3 class="logo">java 管理后台</h3>
@@ -335,4 +335,57 @@ h2 {
 .el-menu {
   border-right: none;
 } /* 去除菜单默认的自带边框 */
+</style> -->
+
+<!-- ===========增加登录页面================== -->
+ <template>
+  <router-view v-if="$route.path === '/login'" />
+
+  <el-container v-else class="layout-container">
+    <el-aside width="200px" class="aside">
+      <h3 class="logo">🚀 Java管理后台</h3>
+      <el-menu router :default-active="$route.path" background-color="#304156" text-color="#fff">
+        <el-menu-item index="/home"><span>🏠 系统首页</span></el-menu-item>
+        <el-menu-item index="/users"><span>👥 用户管理</span></el-menu-item>
+      </el-menu>
+    </el-aside>
+
+    <el-container>
+      <el-header class="header">
+        <span class="welcome">欢迎回来，{{ userStore.username }}</span>
+        
+        <el-button type="danger" size="small" style="margin-left: 20px;" @click="handleLogout">
+          退出登录
+        </el-button>
+      </el-header>
+
+      <el-main>
+        <router-view />
+      </el-main>
+    </el-container>
+  </el-container>
+</template>
+
+<script setup>
+import { useRouter } from 'vue-router';
+// 1. 在骨架中也要引入金库
+import { useUserStore } from './store/user';
+
+const router = useRouter();
+const userStore = useUserStore();
+
+// 退出登录逻辑
+const handleLogout = () => {
+  userStore.logout();  // 清空 Pinia 里的 Token 和用户名
+  router.push('/login'); // 踢回登录页
+};
+</script>
+
+<style scoped>
+.layout-container { height: 100vh; }
+.aside { background-color: #304156; }
+.logo { color: white; text-align: center; padding: 20px 0; margin: 0; }
+.header { background-color: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: flex-end; }
+.welcome { color: #409EFF; font-weight: bold; }
+.el-menu { border-right: none; }
 </style>

@@ -3,12 +3,19 @@ import { createRouter,createWebHistory } from "vue-router";
 //引入页面组件
 import Home from '../views/Home.vue'
 import User from '../views/User.vue'
+import Login from "../views/Login.vue";
 
 //定义规则路由表
 const routes = [
     {
         path:'/',
         redirect:'/home'  //默认重定向到首页
+    },
+    {
+        // 配置登录路由
+        path:'/login',
+        name:"login",
+        component: Login
     },
     {
         path:'/home',
