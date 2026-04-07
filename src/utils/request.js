@@ -5,7 +5,8 @@ import { useUserStore } from '../store/user';
 
 // 1.创建axios实例（RestTemplate Bean）
 const request = axios.create({
-  baseURL: "https://jsonplaceholder.typicode.com",
+  // baseURL: "https://jsonplaceholder.typicode.com",
+  baseURL:"http://127.0.0.1:8080",
   timeout: 5000,
 });
 

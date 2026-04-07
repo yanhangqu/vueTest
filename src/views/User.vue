@@ -261,10 +261,29 @@ const total = ref(10);
 const fetchUsers = async () => {
   loading.value = true;
   try {
-    const res = await request.get('/users', { params: { _page: queryParams.page, _limit: queryParams.limit, name_like: queryParams.name || undefined } });
-    userList.value = res;
+    // 1. 【适配请求参数】：转为 Spring Boot 喜欢的格式
+    const res = await request.get('/users', {
+      params: {
+        page: queryParams.page - 1,  // 核心！前端页码 1，传给后端变成 0
+        size: queryParams.limit,     // 后端通常叫 size，不再叫 _limit
+        name: queryParams.name || undefined // 后端的模糊搜索参数名 (如果你的 Java 实体类叫 username，这里就改成 username)
+      }
+    });
+
+    // 为了排错，我们打印一下看看 Axios 拦截器有没有帮你剥离外层的 data
+    console.log("后端返回的数据：", res);
+
+    // 2. 【适配响应数据】：精准提取 content 和 totalElements
+    // 这里的容错写法：兼容你有没有在 request.js 里写 `return response.data`
+    const responseData = res.data ? res.data : res;
+
+    // 提取数组给表格
+    userList.value = responseData.content;
+    // 提取总条数给分页组件
+    total.value = responseData.totalElements;
+
   } catch (error) {
-    console.error(error);
+    console.error("拉取数据失败", error);
   } finally {
     loading.value = false;
   }
@@ -315,39 +334,55 @@ const handleEdit = (row) => {
   dialogVisible.value = true;
 };
 
-// 点击删除按钮
+// 6. 点击“删除”按钮 (真实接口版)
 const handleDelete = (row) => {
   ElMessageBox.confirm(`确定要永久删除用户【${row.name}】吗？`, '系统提示', {
     confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning',
   }).then(async () => {
-    ElMessage.success('删除成功！(模拟)');
-    fetchUsers(); 
+    try {
+      // 【真实 DELETE 请求】：按 RESTful 标准，通常把 ID 拼在路径后面
+      await request.delete(`/users/${row.id}`);
+      ElMessage.success('删除成功！');
+      
+      // 优化：如果当前页只有最后一条数据被删了，自动回到上一页
+      if (userList.value.length === 1 && queryParams.page > 1) {
+        queryParams.page--;
+      }
+      fetchUsers(); // 重新拉取最新列表
+    } catch (error) {
+      // 如果报错，request.js 的拦截器会自动打印，这里可以不用额外处理
+    }
   }).catch(() => {
     ElMessage.info('已取消删除');
   });
 };
-
 // 关闭弹窗时清空红色的校验报错
 const resetForm = () => {
   if (formRef.value) formRef.value.clearValidate();
 };
 
-// 提交表单
+// 8. 点击“确定”提交表单 (真实接口版)
 const submitForm = async () => {
   if (!formRef.value) return;
-  // 触发所有校验规则
   await formRef.value.validate(async (valid) => {
     if (valid) {
-      // 校验通过，发送请求
-      if (form.id != null) {
-        ElMessage.success('修改成功！(模拟)');
-      } else {
-        ElMessage.success('新增成功！(模拟)');
+      try {
+        if (form.id != null) {
+          // 【真实 PUT 请求】修改数据。同样把 ID 拼在路径后，把 form 作为请求体 (Body)
+          await request.put(`/users/${form.id}`, form);
+          ElMessage.success('修改成功！');
+        } else {
+          // 【真实 POST 请求】新增数据。不需要带 ID
+          await request.post('/users', form);
+          ElMessage.success('新增成功！');
+        }
+        
+        dialogVisible.value = false; // 成功后关闭弹窗
+        fetchUsers();                // 重新拉取列表
+      } catch (error) {
+        console.error("提交失败", error);
       }
-      dialogVisible.value = false;
-      fetchUsers();                
     } else {
-      console.log('表单校验不通过！');
       return false;
     }
   });
